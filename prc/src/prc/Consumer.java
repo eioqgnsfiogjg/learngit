@@ -1,46 +1,39 @@
 package prc;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class Consumer implements Runnable {
-	int buffer_size = 5;
-	static int mutex2 = 1,empty,full,out = 0,ccount = 0;
-	static List<Goods> list = new ArrayList<Goods> ();
-	Consumer()
+	List<Goods> list;
+	Consumer(List<Goods> list)
 	{
-	
+		this.list = list;
 	}
 	public void run()
 	{
 		
 		while(true)
-		{
-			empty = Producer.empty;
-			full = Producer.full;
-			if(full <= 0)
-			{
-				System.out.println("资源不足");
-			}
-			else
-				full--;
-			if(mutex2 > 0)
-			{
-				mutex2--;
-				System.out.println("第"+ccount+"号消费者者消费了" + list.get(out).getData());
-				out += 1;
-				mutex2++;
-				empty++;
-			}
-		}
-	}
+		{	
+				if(Thread.currentThread().isInterrupted())
+					break;
+			Goods g = null;
+			Main.lock.lock();
 			
-		
+	        if(list.size() >= 0) {
+	        	Main.full.signalAll();//full信号量-1
+	        	try {
+					Main.empty.await();//empty信号量+1
+				} catch (InterruptedException e) {
+					// TODO 自动生成的 catch 块
+					e.printStackTrace();
+				}
+	        }
+	        //g = list.remove(0);
+	        g = list.get(0);
+	        list.remove(0);
+			Main.lock.unlock();
+			System.out.println("消费者：" + Thread.currentThread().getId() + "消费了" + g.getData());
+			
+		}
 
-	
-
-	
-		
-	
+	}
 }

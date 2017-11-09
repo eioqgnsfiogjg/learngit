@@ -1,59 +1,67 @@
 package prc;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class Producer implements Runnable {
-	static List<Goods> list = new ArrayList<Goods> ();
-	int buffer_size = 5;
-	static int mutex1 = 1,empty = 5,full = 0,in = 0,count = 0;
-	Producer()
+	static List<Goods> list;
+	private int len;
+
+	Producer(List<Goods> list,int len)
 	{
-		
+		this.list = list;
+		this.len = len;
 	}
 	public void run()
 	{	
 		while(true)
 		{
-			if(count != 0)
-			{
-				empty = Consumer.empty;
-				full = Consumer.full;
-			}
-            
+			if(Thread.currentThread().isInterrupted())
+				break;
+			
 			Random r = new Random();
-		
-			int temp = r.nextInt(10);
-			if(empty <= 0)
-			{
-				System.out.println("资源不足");
+            //生产者单作业生产
+			Goods g = new Goods();
+            //
+			g.setData(r.nextInt(100));
+            Main.lock.lock();
+            
+            if(list.size() >= len)
+            {
+                Main.empty.signalAll();//empty信号量-1
+                try {
+					Main.full.await();//full信号量+1
+				} catch (InterruptedException e) {
+					// TODO 自动生成的 catch 块
+					e.printStackTrace();
+				}
+            }
+            try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO 自动生成的 catch 块
+				e.printStackTrace();
 			}
-			else
-				empty--;
-			if(mutex1 > 0)
-			{
-				mutex1--;
-				list.add(new Goods(temp));
-				count++;
-				System.out.println("该缓冲池现在已经有"+list.size()+"缓冲区被填满");
-				System.out.println("第"+count+"号生产者生产了" + list.get(in).getData());
-				in += 1;
-				mutex1++;
-				full++;
-				sleep(1000);
-			}
+            list.add(g);
+            
+            //多缓冲区的缓冲池
+             /*
+            int overbuffer = list.size() - Main.bufferSize;
+            if(list.size() >= Main.bufferSize)
+            {
+            	for(int j = 0;j < overbuffer;j++)
+            		list.remove(0);
+            	continue;
+            }*/
+            
+            Main.lock.unlock();
+            System.out.println("生产者ID:"+Thread.currentThread().getId()+" 生产了:"+g.getData());
+            
 		}
 	}
 	
-	private void sleep(int i) {
-		// TODO 自动生成的方法存根
-		
-	}
-	public static List getList()
-	{
-		return list;
-	}
 	
+	
+
 	
 }
