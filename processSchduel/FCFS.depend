@@ -1,6 +1,0 @@
-# depslib dependency file v1.0
-1510461389 source:e:\code\fcfs\main.c
-	<stdio.h>
-	<String.h>
-	<malloc.h>
-
